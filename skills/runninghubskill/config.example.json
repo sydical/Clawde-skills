@@ -1,0 +1,14 @@
+{
+  "name": "RunningHub Image Generation",
+  "skill": "runninghubskill",
+  "description": "使用 RunningHub 云端 ComfyUI 生成 AI 图像",
+  "enabled": true,
+  "env": {
+    "RUNNINGHUB_API_KEY": "your-api-key",
+    "RUNNINGHUB_WORKFLOW_ID": "2001898176946814977"
+  },
+  "config": {
+    "apiKey": "your-api-key",
+    "workflowId": "2001898176946814977"
+  }
+}
