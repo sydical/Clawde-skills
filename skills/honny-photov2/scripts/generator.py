@@ -185,7 +185,8 @@ class HonnyPhotoV2:
                 time.sleep(RETRY_DELAY_MS / 1000)
                 continue
             
-            if result.get('code') != 0:
+            # code 可能是 0、None 或空字符串，都表示成功
+            if result.get('code') not in [0, None, ''] and result.get('code') != '0':
                 raise Exception(f"API错误: {result.get('message')}")
             
             # 成功
@@ -194,7 +195,11 @@ class HonnyPhotoV2:
         if result.get('code') == 429:
             raise Exception(f"队列已满，重试{MAX_RETRIES}次后仍失败")
         
-        task_id = result['data']['taskId']
+        # taskId 可能在 data 中，也可能在顶层
+        task_id = result.get('taskId') or (result.get('data') and result['data'].get('taskId'))
+        if not task_id:
+            raise Exception(f"获取任务ID失败: {result}")
+        
         print(f"📋 任务ID: {task_id}")
         
         # 轮询结果
@@ -218,19 +223,21 @@ class HonnyPhotoV2:
                 continue
             
             result = response.json()
-            status = result['data']['status']
+            # status 可能在 data 中，也可能在顶层
+            status = result.get('status') or (result.get('data') and result['data'].get('status'))
             
             if status == "SUCCESS":
                 elapsed = time.time() - start_time
                 print(f"✅ 生成完成！耗时: {elapsed:.1f}秒")
                 
-                outputs = result['data'].get('outputs', [])
-                if outputs and len(outputs) > 0:
-                    return outputs[0].get('url')
+                # results 可能在 data 中，也可能在顶层
+                results = result.get('results') or (result.get('data') and result['data'].get('results')) or []
+                if results and len(results) > 0:
+                    return results[0].get('url')
                 return None
             
             elif status == "FAILED":
-                error = result['data'].get('errorMessage', '未知错误')
+                error = result.get('errorMessage') or (result.get('data') and result['data'].get('errorMessage')) or '未知错误'
                 raise Exception(f"生成失败: {error}")
             
             else:
