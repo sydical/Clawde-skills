@@ -1,0 +1,10 @@
+{
+  "model": {
+    "primary": "minimax/MiniMax-M2.5"
+  },
+  "workspace": "/root/data/disk/workspace",
+  "skills": [],
+  "subagents": {
+    "allowAgents": ["*"]
+  }
+}

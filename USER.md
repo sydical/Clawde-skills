@@ -2,8 +2,8 @@
 
 _Learn about the person you're helping. Update this as you go._
 
-- **Name:** 糖果
-- **What to call them:** 糖果
+- **Name:** 老坛
+- **What to call them:** 老坛
 - **Pronouns:** _(optional)_
 - **Timezone:** 北京时区 (UTC+8)
 - **Notes:**
