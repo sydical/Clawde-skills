@@ -40,7 +40,7 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 ### GitHub 备份
 
 - **用户**: sydical
-- **Token**: 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
+- **Token**: [YOUR_TOKEN]
 - **仓库**: https://github.com/sydical/Clawde-skills
 
 ### 快捷指令
