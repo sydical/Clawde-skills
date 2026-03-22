@@ -1,0 +1,8 @@
+{
+  "ownerId": "kn704tkqeg6whtj1y69zfwg4vs82c1rp",
+  "slug": "honny-social-publisher",
+  "version": "1.2.0",
+  "publishedAt": 1773152826000,
+  "source": "kb-social-publisher + 得物 + 抖音支持",
+  "features": ["微博发布", "小红书发布", "得物发布", "抖音发布", "多平台同时发布", "视频上传", "预览模式"]
+}

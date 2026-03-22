@@ -1,0 +1,12 @@
+{
+  "name": "honny-social-publisher",
+  "version": "1.1.0",
+  "description": "微博、小红书、得物发布工具 - 支持多平台发布",
+  "main": "scripts/social-publisher.ts",
+  "scripts": {
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "date": "2026-03-15",
+  "tasks": {
+    "weather": "done",
+    "news": "done",
+    "plan": "done",
+    "morning_post": "done",
+    "hot_search": "done",
+    "morning_shoot": "done",
+    "afternoon_shoot": "done",
+    "sunset": "done",
+    "content_write": "done",
+    "social_publish": "done",
+    "daily_review": "done",
+    "tomorrow_preview": "done"
+  },
+  "hot_topics": [
+    {
+      "rank": 1,
+      "topic": "#AI新工具发布",
+      "category": "科技数码",
+      "hot": "100万"
+    },
+    {
+      "rank": 2,
+      "topic": "#春季穿搭",
+      "category": "时尚",
+      "hot": "80万"
+    },
+    {
+      "rank": 3,
+      "topic": "#平潭蓝眼泪",
+      "category": "旅行",
+      "hot": "50万"
+    },
+    {
+      "rank": 4,
+      "topic": "#手机摄影技巧",
+      "category": "摄影",
+      "hot": "30万"
+    },
+    {
+      "rank": 5,
+      "topic": "#一人食食谱",
+      "category": "美食",
+      "hot": "25万"
+    }
+  ],
+  "weather": {
+    "condition": "晴天",
+    "temp": "19-25°C",
+    "humidity": "80%",
+    "wind": "7级",
+    "aqi": "优",
+    "sunrise": "06:15",
+    "sunset": "18:25"
+  },
+  "weather_result": {
+    "condition": "晴天",
+    "temp": "19-25°C",
+    "humidity": "80%",
+    "wind": "7级",
+    "aqi": "优",
+    "sunrise": "06:15",
+    "sunset": "18:25"
+  },
+  "last_run": "2026-03-15T18:11:42.180951",
+  "news_result": [
+    "AI 领域新突破：新一代大模型发布",
+    "旅游热度上升：平潭成为热门目的地",
+    "摄影技巧：手机也能拍出大片感"
+  ],
+  "plan_result": "\n📅 2026-03-15\n📍 平潭\n🌤️ 晴天 19-25°C\n\n🌅 早晨时光 (06:00-09:00)\n  ☀️ 醒来，查看天气\n  🏃 晨间运动\n  🍳 早餐时间\n  📱 读取资讯\n✨ 今天也要好好生活呀～\n",
+  "morning_post_result": "早安呀！晴天的平潭，温度19-25°C，今天也要好好生活呀～",
+  "hot_search_result": [
+    {
+      "rank": 1,
+      "topic": "#AI新工具发布",
+      "category": "科技数码",
+      "hot": "100万"
+    },
+    {
+      "rank": 2,
+      "topic": "#春季穿搭",
+      "category": "时尚",
+      "hot": "80万"
+    },
+    {
+      "rank": 3,
+      "topic": "#平潭蓝眼泪",
+      "category": "旅行",
+      "hot": "50万"
+    },
+    {
+      "rank": 4,
+      "topic": "#手机摄影技巧",
+      "category": "摄影",
+      "hot": "30万"
+    },
+    {
+      "rank": 5,
+      "topic": "#一人食食谱",
+      "category": "美食",
+      "hot": "25万"
+    }
+  ],
+  "morning_shoot_result": "清晨Honny在平潭海边慢跑，阳光柔和，运动风格",
+  "afternoon_shoot_result": "下午Honny在平潭咖啡馆，时尚简约，自然清新",
+  "sunset_result": "傍晚Honny在平潭海边看日落，大片金色夕阳，浪漫氛围",
+  "content_write_result": "早安呀！晴天的平潭，温度19-25°C，今天也要好好生活呀～\n\n顺便看到#AI新工具发布，这个新技术好酷，下午研究一下",
+  "social_publish_result": "早安呀！晴天的平潭，温度19-25°C，今天也要好好生活呀～\n\n顺便看到#AI新工具发布，这个新技术好酷，下午研究一下",
+  "daily_review_result": "今日完成",
+  "tomorrow_preview_result": "明天见！今天也要好好生活呀～"
+}
