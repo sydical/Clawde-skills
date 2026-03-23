@@ -11,10 +11,12 @@ from datetime import datetime
 # 配置
 SKILL_DIR = os.path.dirname(os.path.abspath(__file__))
 WORKFLOW_ID = os.environ.get('WORKFLOW_ID', '2016727774387511297')
+AUTO_VIDEO_WORKFLOW_ID = os.environ.get('AUTO_VIDEO_WORKFLOW_ID', '2035800872889880577')
 MEMORY_DIR = os.path.expanduser('~/data/disk/workspace/memory')
 MAX_RETRIES = int(os.environ.get('MAX_RETRIES', '5'))
 RETRY_DELAY_MS = int(os.environ.get('RETRY_DELAY_MS', '60000'))
 POLL_INTERVAL = int(os.environ.get('POLL_INTERVAL', '60'))  # 轮询间隔（秒）
+AUTO_VIDEO_POLL_INTERVAL = int(os.environ.get('AUTO_VIDEO_POLL_INTERVAL', '180'))  # 自动视频轮询间隔（3分钟）
 
 
 class HonnyVideo:
@@ -253,6 +255,235 @@ class HonnyVideo:
             }
 
 
+class AutoVideoGenerator:
+    """参考图自动视频生成器 - 根据参考图自动生成动态视频"""
+    
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://www.runninghub.cn"
+        self.run_url = f"{self.base_url}/openapi/v2/run/ai-app/{AUTO_VIDEO_WORKFLOW_ID}"
+        self.query_url = f"{self.base_url}/openapi/v2/query"
+        
+    def get_headers(self):
+        return {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+    
+    def submit_task(self, image_file, prompt, frames=101):
+        """提交参考图自动视频生成任务
+        
+        Args:
+            image_file: 参考图文件名（如：xxx.png）
+            prompt: 提示词
+            frames: 帧数（默认101帧 = 5秒）
+        """
+        print(f"🎬 正在提交参考图自动视频生成任务...")
+        print(f"📷 参考图: {image_file}")
+        print(f"📝 提示词: {prompt}")
+        print(f"🎞️ 帧数: {frames}")
+        
+        payload = {
+            "nodeInfoList": [
+                {
+                    "nodeId": "34",
+                    "fieldName": "image",
+                    "fieldValue": image_file,
+                    "description": "参考图"
+                },
+                {
+                    "nodeId": "374",
+                    "fieldName": "text",
+                    "fieldValue": prompt,
+                    "description": "提示词"
+                },
+                {
+                    "nodeId": "20",
+                    "fieldName": "value",
+                    "fieldValue": str(frames),
+                    "description": "帧数(20*秒数+1）"
+                }
+            ],
+            "instanceType": "default",
+            "usePersonalQueue": "false"
+        }
+        
+        # 带重试机制
+        for attempt in range(MAX_RETRIES):
+            response = requests.post(
+                self.run_url, 
+                headers=self.get_headers(), 
+                data=json.dumps(payload),
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                print(f"❌ 请求失败: {response.status_code}")
+                time.sleep(RETRY_DELAY_MS / 1000)
+                continue
+            
+            result = response.json()
+            
+            # 检查队列是否满 (errorCode 421)
+            if result.get('errorCode') == '421':
+                wait_seconds = RETRY_DELAY_MS / 1000
+                print(f"⏳ 队列已满，{wait_seconds}秒后重试 ({attempt + 1}/{MAX_RETRIES})...")
+                time.sleep(RETRY_DELAY_MS / 1000)
+                continue
+            
+            if result.get('errorCode'):
+                print(f"❌ API错误: {result.get('errorMessage')}")
+                return None
+            
+            if result.get('taskId'):
+                task_id = result['taskId']
+                print(f"✅ 任务ID: {task_id}")
+                return task_id
+        
+        print(f"❌ 提交失败，已重试{MAX_RETRIES}次")
+        return None
+    
+    def wait_for_result(self, task_id, max_wait=1800, auto_download=True):
+        """等待视频生成完成（3分钟轮询间隔）
+        
+        Args:
+            task_id: 任务ID
+            max_wait: 最大等待时间（秒，默认30分钟）
+            auto_download: 是否自动下载视频到本地
+        """
+        print(f"⏳ 等待生成中（每{AUTO_VIDEO_POLL_INTERVAL/60:.0f}分钟查询进度）...")
+        start_time = time.time()
+        last_progress = 0
+        
+        while time.time() - start_time < max_wait:
+            response = requests.post(
+                self.query_url,
+                headers=self.get_headers(),
+                data=json.dumps({"taskId": task_id}),
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                time.sleep(AUTO_VIDEO_POLL_INTERVAL)
+                continue
+            
+            result = response.json()
+            
+            # 检查是否有 data 字段
+            if 'data' not in result:
+                time.sleep(AUTO_VIDEO_POLL_INTERVAL)
+                continue
+            
+            data = result['data']
+            status = data.get('status')
+            progress = data.get('progress', 0)
+            
+            # 只在进度变化时打印
+            if progress != last_progress:
+                elapsed = time.time() - start_time
+                print(f"⏳ 进度: {progress}% ({elapsed/60:.1f}分钟)")
+                last_progress = progress
+            
+            if status == "SUCCESS":
+                elapsed = time.time() - start_time
+                print(f"✅ 生成完成！耗时: {elapsed/60:.1f}分钟")
+                
+                outputs = data.get('outputs', [])
+                if outputs and len(outputs) > 0:
+                    video_url = outputs[0].get('url')
+                    
+                    # 自动下载视频
+                    if auto_download and video_url:
+                        local_path = self.download_video(video_url, task_id)
+                        return {
+                            "video_url": video_url,
+                            "local_path": local_path
+                        }
+                    return video_url
+                return None
+            
+            elif status == "FAILED":
+                error = data.get('errorMessage', '未知错误')
+                print(f"❌ 生成失败: {error}")
+                return None
+            
+            else:
+                time.sleep(AUTO_VIDEO_POLL_INTERVAL)
+        
+        print("⏰ 等待超时")
+        return None
+    
+    def download_video(self, video_url, task_id):
+        """下载视频到本地"""
+        try:
+            print(f"📥 正在下载视频...")
+            
+            output_dir = os.path.join(SKILL_DIR, "outputs")
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # 生成文件名
+            filename = f"auto_video_{task_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+            output_path = os.path.join(output_dir, filename)
+            
+            # 下载视频
+            response = requests.get(video_url, timeout=300, stream=True)
+            response.raise_for_status()
+            
+            total_size = int(response.headers.get('content-length', 0))
+            downloaded = 0
+            
+            with open(output_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total_size > 0 and downloaded % (1024 * 1024 * 10) == 0:  # 每10MB打印一次
+                            pct = downloaded * 100 / total_size
+                            print(f"📥 下载进度: {pct:.1f}%")
+            
+            print(f"✅ 视频已保存到: {output_path}")
+            return output_path
+            
+        except Exception as e:
+            print(f"❌ 下载失败: {e}")
+            return None
+    
+    def generate(self, image_file, prompt, frames=101, auto_download=True):
+        """生成自动视频
+        
+        Args:
+            image_file: 参考图文件名
+            prompt: 提示词
+            frames: 帧数（默认101帧 = 5秒）
+            auto_download: 是否自动下载视频到本地
+        """
+        # 1. 提交任务
+        task_id = self.submit_task(image_file, prompt, frames)
+        if not task_id:
+            return None
+        
+        # 2. 等待结果（自动下载）
+        result = self.wait_for_result(task_id, auto_download=auto_download)
+        
+        # 处理返回结果
+        if isinstance(result, dict):
+            return {
+                "video_url": result.get("video_url"),
+                "local_path": result.get("local_path"),
+                "prompt": prompt,
+                "task_id": task_id,
+                "frames": frames
+            }
+        else:
+            return {
+                "video_url": result,
+                "local_path": None,
+                "prompt": prompt,
+                "task_id": task_id,
+                "frames": frames
+            }
+
+
 def main():
     """测试"""
     api_key = os.environ.get('RUNNINGHUB_API_KEY')
@@ -260,9 +491,11 @@ def main():
         print("❌ 请设置 RUNNINGHUB_API_KEY 环境变量")
         sys.exit(1)
     
+    # 测试图生视频
+    print("=" * 50)
+    print("测试图生视频")
+    print("=" * 50)
     generator = HonnyVideo(api_key)
-    
-    # 测试生成
     prompt = "一个女孩在玩耍"
     image_url = "test_image_url.png"
     
@@ -271,6 +504,23 @@ def main():
     if result and result.get('video_url'):
         print(f"\n🎉 生成成功!")
         print(f"🎥 视频: {result['video_url']}")
+    else:
+        print("\n❌ 生成失败")
+    
+    # 测试参考图自动视频
+    print("\n" + "=" * 50)
+    print("测试参考图自动视频")
+    print("=" * 50)
+    auto_generator = AutoVideoGenerator(api_key)
+    auto_prompt = "元气运动女孩转过身，面向前方，穿着浅灰色防晒外套搭配白色运动内衣和深灰色瑜伽裤，手拿黑色托特包，头戴墨镜，走向前方，在户外砖墙绿植背景前自然行走，午后阳光氛围，松弛随性，镜头缓慢推进"
+    image_file = "45f5a84954a61973399abac773f929eb9a8fc32e7069f674283e3bc1baf345a3.png"
+    
+    result = auto_generator.generate(image_file, auto_prompt, frames=101)
+    
+    if result and result.get('video_url'):
+        print(f"\n🎉 生成成功!")
+        print(f"🎥 视频: {result['video_url']}")
+        print(f"🎞️ 帧数: {result['frames']}")
     else:
         print("\n❌ 生成失败")
 
